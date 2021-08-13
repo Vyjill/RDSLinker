@@ -1,0 +1,22 @@
+﻿<Page
+    x:Class="RDSLinker.OptionsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:RDSLinker"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+
+        <StackPanel x:Name="Customer" Margin="20">
+            <TextBlock Text="Paramètres" FontSize="24"/>
+            <TextBox x:Name="ipfield" PlaceholderText="0.0.0.0" Header= "IP" Margin="0,24,0,0" MaxLength="32" Width="400" HorizontalAlignment="Left" InputScope="PersonalFullName"/>
+            <TextBox x:Name="portfield" PlaceholderText="8080"  Header="Port" Margin="0,24,0,0" MaxLength="15" Width="400" HorizontalAlignment="Left" InputScope="TelephoneNumber" />
+            <TextBox x:Name="sendfilefield" Text="Selectionnez un fichier..." Header="Fichier d'envoi" Margin="0,24,0,0" MaxLength="50" Width="400" HorizontalAlignment="Left" InputScope="EmailNameOrAddress" IsEnabled="false"/>
+            <Button Content="..." Margin="0,24" Click="SelectFile_Click"/>
+            <Button Content="Sauvegarder" Margin="0,24" Click="SaveButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Page>
