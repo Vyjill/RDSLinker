@@ -9,7 +9,7 @@
   <Identity
     Name="41b16698-c1ec-4604-80ac-f2724299cd7e"
     Publisher="CN=Ulysse Moreau"
-    Version="1.0.3.0" />
+    Version="1.0.4.0" />
 
   <mp:PhoneIdentity PhoneProductId="41b16698-c1ec-4604-80ac-f2724299cd7e" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

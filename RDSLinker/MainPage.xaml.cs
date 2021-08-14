@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Background;
 using Windows.Foundation;
@@ -120,8 +121,8 @@ namespace RDSLinker
                     String text = await Windows.Storage.FileIO.ReadTextAsync(titlesFile);
                     if (text != prevText)
                     {
-                        consoleLog("--Change Detected");
-                        childPointer.addParagraph("--Change Detected");
+                        consoleLog("Le fichier à été modifié");
+                        childPointer.addParagraph("Le fichier à été modifié");
 
                         SendFileData(childPointer);
                         prevText = text;
@@ -140,11 +141,78 @@ namespace RDSLinker
         {
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
 
+            try
+            {
+
+                String filetoken = (String)localSettings.Values["filetoken"];
+
+                StorageFile titlesFile = await StorageApplicationPermissions.FutureAccessList.GetFileAsync(filetoken);
+
+                string text = await Windows.Storage.FileIO.ReadTextAsync(titlesFile);
+
+                text = text.Replace("\r\n", "");
+
+                string textNews = "NEWS=" + text;
+                string textSport = "SPORT=\u00A0";
+
+                if (text.Length > 30)
+                {
+                    int unicodecut = 30;
+                    textNews = "NEWS=" + text.Substring(0, unicodecut);
+                    int textNewsByteLength = Encoding.UTF8.GetByteCount(textNews);
+
+                    Debug.WriteLine(textNewsByteLength);
+                    Debug.WriteLine(textNews.Length);
+
+                    while (textNewsByteLength > 35)
+                    {
+                        unicodecut--;
+                        textNews = "NEWS=" + text.Substring(0, unicodecut);
+                        textNewsByteLength = Encoding.UTF8.GetByteCount(textNews);
+                    }
+
+                    textSport = "SPORT=" + text.Substring(unicodecut);
+                }
+                if (textSport.Length > 35)
+                {
+                    int unicodecut = 35;
+                    textSport = textSport.Substring(0, unicodecut);
+                    int textSportByteLength = Encoding.UTF8.GetByteCount(textSport);
+
+                    while (textSportByteLength > 35)
+                    {
+                        unicodecut--;
+                        textSport = textSport.Substring(0, unicodecut);
+                        textSportByteLength = Encoding.UTF8.GetByteCount(textSport);
+                    }
+                }
+
+
+                consoleLog("Envoi des données :");
+                consoleLog(textNews + "\r\n" + textSport);
+                childPointer.addParagraph("Envoi des données :");
+                childPointer.addParagraph(textNews + "\r\n" + textSport);
+
+
+                sendData(childPointer, textNews);
+                sendData(childPointer, textSport);
+            }
+            catch (Exception)
+            {
+                consoleLog("Le fichier que vous avez selectionné contient des caractères étranges");
+                childPointer.addParagraph("Le fichier que vous avez selectionné contient des caractères étranges");
+                sendData(childPointer, "NEWS=-");
+                sendData(childPointer, "SPORT=-");
+            }
+        }
+        private async void sendData(GlobalPage childPointer, string data)
+        {
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+
             // Read data from a simple setting.
             String ip = (String)localSettings.Values["ip"];
             String port = (String)localSettings.Values["port"];
             String file = (String)localSettings.Values["file"];
-            String filetoken = (String)localSettings.Values["filetoken"];
             try
             {
                 // Create the StreamSocket and establish a connection to the echo server.
@@ -155,40 +223,22 @@ namespace RDSLinker
 
                     consoleLog("Trying to connect to TCP Server...");
                     childPointer.addParagraph("Trying to connect to TCP Server...");
-                    
+
 
                     await streamSocket.ConnectAsync(hostName, port);
 
-                    consoleLog("Connected to "+ip+":"+port+".");
+                    consoleLog("Connected to " + ip + ":" + port + ".");
                     childPointer.addParagraph("Connected to " + ip + ":" + port + ".");
 
-                    StorageFile titlesFile = await StorageApplicationPermissions.FutureAccessList.GetFileAsync(filetoken);
 
-                    try
+                    using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
                     {
-                        string text = await Windows.Storage.FileIO.ReadTextAsync(titlesFile);
-
-                        consoleLog("Envoi des données :");
-                        consoleLog(text);
-                        childPointer.addParagraph("Envoi des données :");
-                        childPointer.addParagraph(text);
-
-                        using (Stream outputStream = streamSocket.OutputStream.AsStreamForWrite())
+                        using (var streamWriter = new StreamWriter(outputStream))
                         {
-                            using (var streamWriter = new StreamWriter(outputStream))
-                            {
-                                await streamWriter.WriteLineAsync(text);
-                                await streamWriter.FlushAsync();
-                            }
+                            await streamWriter.WriteLineAsync(data);
+                            await streamWriter.FlushAsync();
                         }
                     }
-                    catch (Exception)
-                    {
-                        consoleLog("Le fichier que vous avez selectionné contient des caractères étranges");
-                        childPointer.addParagraph("Le fichier que vous avez selectionné contient des caractères étranges");
-                    }
-
-
 
                     // Read data from the echo server.
                     string response;
